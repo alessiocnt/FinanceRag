@@ -1,6 +1,7 @@
 from typing import Dict, List
 import torch
 import numpy as np
+from transformers import PreTrainedModel
 
 class Embedder:
     def __init__(self, model: PreTrainedModel, device: str=None):

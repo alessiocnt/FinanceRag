@@ -170,3 +170,4 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 *.code-workspace
+/vector_store*
