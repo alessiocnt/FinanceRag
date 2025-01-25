@@ -9,18 +9,22 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from nltk.stem import PorterStemmer
 from nltk.corpus import stopwords
 
+from embeddings import *
+
 # # Download required NLTK resources
 # nltk.download('stopwords')
 # nltk.download('punkt')
 
-class TextProcessorBuilder:
-    def __init__(self, language='english'):
+class DataHandler:
+    def __init__(self, tokenizer=None, embedding_model=None, language='english'):
         """
         Initialize the text processor with raw data.
         :param data: List of text documents to be processed or a single string.
         :param language: Language for stopwords and lemmatization (default: 'en').
         """
         self.data = ""
+        self.tokenizer = tokenizer if tokenizer else nltk.word_tokenize
+        self.embedding_model = embedding_model if embedding_model else TfidfVectorizer()
         self.language = language
         self.nlp = spacy.load('en_core_web_sm')  # Load spaCy model for lemmatization
         self.stop_words = set(stopwords.words(language))
@@ -56,12 +60,6 @@ class TextProcessorBuilder:
         self.data = [func(text) for text in self.data]
         return self
 
-    def tokenize(self):
-        """Tokenize the text into words."""
-        # TODO
-        # self.data = [nltk.word_tokenize(text) for text in self.data]
-        return self
-
     def stem_text(self):
         """Apply stemming to reduce words to their root form."""
         self.data = [" ".join([self.stemmer.stem(word) for word in text.split()]) for text in self.data]
@@ -77,9 +75,18 @@ class TextProcessorBuilder:
         self.data = [" ".join(text.split()) for text in self.data]
         return self
 
-    def embed_text(self):
+    def tokenize(self):
+        """Tokenize the text into words."""
+        self.data = self.tokenizer.tokenize(self.data)
+        return self
+    
+    def _chunk_split(self, text, max_length=512):
+        """Split the text into chunks of a maximum length."""
+        return chunker(self.data)
+
+    def embed(self):
         """Convert text data into embeddings."""
-        # TODO
+        self.data = self.embedding_model.generate_embeddings(self._chunk_split(self.data))
         return self
 
     def get_data(self):
