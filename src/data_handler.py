@@ -92,3 +92,21 @@ class DataHandler:
     def get_data(self):
         """Return the processed data."""
         return self.data
+
+def extract_tables(text):
+    # Regex pattern to match table-like structures
+    table_pattern = r'(?:(?:\n|\A)([^\n]+\|[^\n]+\n)((?:[-]+\|[-]+\n)?)((?:[^\n]+\|[^\n]+\n)+))'
+    tables = []
+    for match in re.finditer(table_pattern, text, re.MULTILINE):
+        # Extract header and rows
+        header = [h.strip() for h in match.group(1).strip().split('|')]
+        rows = [row.strip().split('|') for row in match.group(3).strip().split('\n')]
+        # Clean and strip each cell
+        rows = [[cell.strip() for cell in row] for row in rows]
+        # Create a text representation
+        table_text = "Columns: " + " | ".join(header) + "\n"
+        table_text += "Rows:\n"
+        for row in rows:
+            table_text += " | ".join(row) + "\n"
+        tables.append(table_text)
+    return tables
