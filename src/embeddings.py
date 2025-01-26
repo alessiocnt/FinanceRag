@@ -69,7 +69,7 @@ class Embedder:
                 print(f"Token type IDs original device: {chunk['token_type_ids'].device}")
             raise
 
-    def generate_embeddings(
+    def encode(
         self, 
         chunks: List[Dict[str, torch.Tensor]], 
         method: str = 'average_last_4', 

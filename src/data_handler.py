@@ -86,7 +86,7 @@ class DataHandler:
 
     def embed(self):
         """Convert text data into embeddings."""
-        self.data = self.embedding_model.generate_embeddings(self._chunk_split(self.data))
+        self.data = self.embedding_model.encode(self._chunk_split(self.data))
         return self
 
     def get_data(self):
