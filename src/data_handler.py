@@ -80,13 +80,17 @@ class DataHandler:
         self.data = self.tokenizer.tokenize(self.data)
         return self
     
-    def _chunk_split(self, text, max_length=512):
+    def chunk_split(self, max_length=512, padding_value=0, overlap_percent=15):
         """Split the text into chunks of a maximum length."""
-        return chunker(self.data)
+        self.data = chunker(self.data, max_length, padding_value, overlap_percent)
+        return self
 
-    def embed(self):
+    def embed(self, method=None):
         """Convert text data into embeddings."""
-        self.data = self.embedding_model.encode(self._chunk_split(self.data))
+        if method:
+            self.data = self.embedding_model.encode(self.data, method=method)
+        else: 
+            self.data = self.embedding_model.encode(self.data)
         return self
 
     def get_data(self):
