@@ -1,6 +1,7 @@
 import os
 import gzip
 import json
+import numpy as np
 import pandas as pd
 from typing import List, Dict, Tuple
 
@@ -101,3 +102,30 @@ class FinanceRAGDataset:
             raise FileNotFoundError(f"File '{file_path}' not found.")
 
         return pd.read_csv(file_path, sep='\t')
+
+# Reduce the dataset size to the only document usefull for testing pourpose. Only 30% of labels are available. We focus only on those corpus.
+def reduce_dataset_size(corpus: List[Dict], 
+                        queries: List[Dict],
+                        qrels: pd.DataFrame) -> Tuple[List[Dict], List[Dict]]:
+    """
+    Reduce the dataset size to a specific ratio based on the available labels.
+    :param corpus: List of corpus data as dictionaries.
+    :param queries: List of query data as dictionaries.
+    :param qrels: Pandas DataFrame with the label data.
+    :return: Tuple of (reduced corpus, reduced queries)
+    """
+    # Filter corpus
+    doc_ids = np.array([elem["_id"] for elem in corpus])
+    doc_texts = np.array([elem["text"] for elem in corpus])
+    mask_queries = np.isin(doc_ids, np.unique(qrels["corpus_id"]))
+    doc_ids = doc_ids[mask_queries]
+    doc_texts = [[doc] for doc in doc_texts[mask_queries]]
+    corpus = dict(zip(doc_ids, doc_texts))
+    # Filter queries
+    query_ids = np.array([elem["_id"] for elem in queries])
+    query_texts = np.array([elem["text"] for elem in queries])
+    mask_queries = np.isin(query_ids, np.unique(qrels["query_id"]))
+    query_ids = query_ids[mask_queries]
+    query_texts = query_texts[mask_queries]
+    queries = dict(zip(query_ids, query_texts))
+    return corpus, queries
