@@ -97,6 +97,15 @@ class DataHandler:
         """Return the processed data."""
         return self.data
 
+    def remove_tables(self):
+        """Remove tables from the text."""
+        def remove_table(text):
+            # Regex pattern to match table-like structures
+            table_pattern = r'(?:(?:\n|\A)([^\n]+\|[^\n]+\n)((?:[-]+\|[-]+\n)?)((?:[^\n]+\|[^\n]+\n)+))'
+            return re.sub(table_pattern, '', text, re.MULTILINE)
+        self.data = [np.str_(remove_table(text)) for text in self.data]
+        return self
+        
 def extract_tables(text):
     # Regex pattern to match table-like structures
     table_pattern = r'(?:(?:\n|\A)([^\n]+\|[^\n]+\n)((?:[-]+\|[-]+\n)?)((?:[^\n]+\|[^\n]+\n)+))'
