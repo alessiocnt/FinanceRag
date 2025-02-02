@@ -108,14 +108,12 @@ class RAGPipeline:
             f'@{k1}': {
                 'ndcg': [],
                 'recall': [], 
-                'mrr': [],
-                'map': []
+                'mrr': []
             },
             f'@{k2}': {
                 'ndcg': [],
                 'recall': [],
-                'mrr': [],
-                'map': []
+                'mrr': []
             }
         }
 
@@ -123,21 +121,18 @@ class RAGPipeline:
                 ndcg = ndcg_at_k(_unique(results[idx]['texts'])[:k], true_docs, k)
                 recall = len(set(_unique(results[idx]['texts'])[:k]) & set(true_docs)) / len(true_docs)
                 mrr = mrr_by_hand(_unique(results[idx]['texts'])[:k], true_docs)
-                map_ = map_by_hand(_unique(results[idx]['texts'])[:k], true_docs)
-                return ndcg, recall, mrr, map_
+                return ndcg, recall, mrr
         
         for idx, _ in results.items():
             true_docs = self.qrels[self.qrels['query_id'] == idx]['corpus_id'].values # Get the true documents labels for the query
-            ndcg_k1, recall_k1, mrr_k1, map_k1 = metris_at_k(k1, true_docs, idx)
+            ndcg_k1, recall_k1, mrr_k1 = metris_at_k(k1, true_docs, idx)
             metrics[f'@{k1}']['ndcg'].append(ndcg_k1)
             metrics[f'@{k1}']['recall'].append(recall_k1)
             metrics[f'@{k1}']['mrr'].append(mrr_k1)
-            metrics[f'@{k1}']['map'].append(map_k1)
-            ndcg_k2, recall_k2, mrr_k2, map_k2 = metris_at_k(k2, true_docs, idx)
+            ndcg_k2, recall_k2, mrr_k2 = metris_at_k(k2, true_docs, idx)
             metrics[f'@{k2}']['ndcg'].append(ndcg_k2)
             metrics[f'@{k2}']['recall'].append(recall_k2)
             metrics[f'@{k2}']['mrr'].append(mrr_k2)
-            metrics[f'@{k2}']['map'].append(map_k2)
         return {
             'ndcg': {
                 f'@{k1}': float(round(np.mean(metrics[f'@{k1}']['ndcg']),4)),
@@ -150,10 +145,6 @@ class RAGPipeline:
             'mrr': {
                 f'@{k1}': float(round(np.mean(metrics[f'@{k1}']['mrr']),4)),
                 f'@{k2}': float(round(np.mean(metrics[f'@{k2}']['mrr']),4))
-            },
-            'map': {
-                f'@{k1}': float(round(np.mean(metrics[f'@{k1}']['map']),4)),
-                f'@{k2}': float(round(np.mean(metrics[f'@{k2}']['map']),4))
             }
         }
             
@@ -179,7 +170,7 @@ def ndcf_by_hand(y_true):
     y_true = sorted(y_true, reverse=True)
     for i, y in enumerate(y_true):
         IDCG += (2**y - 1) / np.log2(i + 2)
-    return round(float(DCG / IDCG),4)
+    return round(float(DCG / IDCG), 4)
 
 def mrr_by_hand(pred_docs, true_docs):
     mrr = 0
@@ -187,7 +178,6 @@ def mrr_by_hand(pred_docs, true_docs):
         if doc in true_docs:
             mrr += 1 / (i + 1)
     return mrr / len(true_docs)
-
 
 def map_by_hand(pred_docs, true_docs):
     true_docs = set(true_docs) 
