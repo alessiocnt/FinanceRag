@@ -25,23 +25,12 @@ class RAGPipeline:
         for idx, text in table_summaries.items():
             self.corpus[idx].append(text)
     
-    # def embed_corpus(self, chunk_size: int=256, method: str=None):
-    #     for idx, text in self.corpus.items():
-    #         embedded_doc = (
-    #             self.text_processor.load_data(text)
-    #             # .to_lowercase()
-    #             # .remove_numbers()
-    #             # .remove_punctuation()
-    #             # .remove_stopwords()
-    #             # .lemmatize_text()
-    #             # .remove_extra_whitespace()
-    #             .remove_tables()
-    #             .tokenize()
-    #             .chunk_split(max_length=chunk_size)
-    #             .embed(method=method)
-    #             .get_data()
-    #         )
-    #         self.corpus_embedding[idx] = embedded_doc
+    def load_query_expansion(self, load_path: str=None, n=2):
+        # n: number of time we want to repeat the main query in the concatenation phaase
+        query_expansion = np.load(load_path, allow_pickle='TRUE').item()
+        # Manage query expansion: q -> q_plus = concat(q*n, q_expansion)
+        for idx, text in query_expansion.items():
+            self.queries[idx] = self.queries[idx] + text + self.queries[idx]*n
 
     def manage_corpus(self, chunk_size: int=256, method: str=None, remove_tables: bool=False):    
         for idx, text in self.corpus.items():
@@ -67,7 +56,7 @@ class RAGPipeline:
         if save_path:
             self.vector_store.save(save_path)
 
-    def embed_queries(self, chunk_size: int=256, method: str=None):
+    def embed_queries(self, chunk_size: int=256, method: str=None, mode='trunk'):
         for idx, text in self.queries.items():
             embedded_query = (
                 self.text_processor.load_data(text)
@@ -78,8 +67,10 @@ class RAGPipeline:
                 # .lemmatize_text()
                 # .remove_extra_whitespace()
                 .tokenize()
-                .chunk_split(max_length=chunk_size)
-                .embed(method=method)
+                .chunk_split(max_length=chunk_size, mode=mode))
+            if len(embedded_query.data) > 1: print(len(embedded_query.data))
+            embedded_query = (                                                       
+                self.text_processor.embed(method=method)
                 .get_data()
             )
             self.query_embedding[idx] = embedded_query

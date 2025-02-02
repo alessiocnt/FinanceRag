@@ -80,9 +80,9 @@ class DataHandler:
         self.data = self.tokenizer.tokenize(self.data)
         return self
     
-    def chunk_split(self, max_length=512, padding_value=0, overlap_percent=15):
+    def chunk_split(self, max_length=512, padding_value=0, overlap_percent=15, mode=None):
         """Split the text into chunks of a maximum length."""
-        self.data = chunker(self.data, max_length, padding_value, overlap_percent)
+        self.data = chunker(self.data, max_length, padding_value, overlap_percent, mode)
         return self
 
     def embed(self, method=None):
