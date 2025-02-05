@@ -144,7 +144,7 @@ class Tokenizer:
 from typing import List
 import torch
 
-def chunker(tokenized_corpus: List[dict], max_length=512, padding_value=0, overlap_percent=15):
+def chunker(tokenized_corpus: List[dict], max_length=512, padding_value=0, overlap_percent=15, mode=None):
     """
     Processes tokenized input and generates chunks with overlap while preserving the mapping structure.
     Args:
@@ -214,4 +214,7 @@ def chunker(tokenized_corpus: List[dict], max_length=512, padding_value=0, overl
             # Break if we've reached the end of the sequence
             if end_pos >= total_length:
                 break
-    return chunks
+    if mode == 'trunk':
+        return [chunks[0]]
+    else: 
+        return chunks 
