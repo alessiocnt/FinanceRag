@@ -109,6 +109,10 @@ class RAGPipeline:
         }
 
         def metris_at_k(k, true_docs, idx):
+                # print(results[idx]['texts'])
+                # print(_unique(results[idx]['texts']))
+                # print(len(_unique(results[idx]['texts'])))
+                # print()
                 ndcg = ndcg_at_k(_unique(results[idx]['texts'])[:k], true_docs, k)
                 recall = len(set(_unique(results[idx]['texts'])[:k]) & set(true_docs)) / len(true_docs)
                 mrr = mrr_by_hand(_unique(results[idx]['texts'])[:k], true_docs)
