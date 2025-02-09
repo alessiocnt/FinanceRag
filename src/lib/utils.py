@@ -84,11 +84,7 @@ def plot_count_words(corpus_df, queries_df):
     fig.update_yaxes(title_text="Frequency")
     fig.show()
 
-def plot_table_results():
-    df_results_ns = pd.read_excel("results/df_results_ns.xlsx")
-    df_results_ss = pd.read_excel("results/df_results_ss.xlsx")
-    df_results_ls = pd.read_excel("results/df_results_ls.xlsx")
-
+def plot_table_results(df_results_ns, df_results_ss, df_results_ls):
     df_ns_long = pd.melt(df_results_ns, id_vars=['dataset'], var_name='metric', value_name='value')
     df_ss_long = pd.melt(df_results_ss, id_vars=['dataset'], var_name='metric', value_name='value')
     df_ls_long = pd.melt(df_results_ls, id_vars=['dataset'], var_name='metric', value_name='value')
@@ -171,14 +167,17 @@ def plot_table_results():
         fig.update_yaxes(title_text=f"{metric.upper()} Score", range=[0, 1], row=row, col=1)
         for col in range(1, len(datasets) + 1): 
             fig.update_xaxes(title_text="Approaches", row=row, col=col)
-            
+
     for col in range(1, len(datasets) + 1): 
         fig.update_yaxes(range=[0, 0.9], row=1, col=col)
         fig.update_yaxes(range=[0, 1], row=2, col=col)
         fig.update_yaxes(range=[0, 0.8], row=3, col=col)
 
+    fig.update_yaxes(range=[0, 0.6], row=1, col=3)
+    fig.update_yaxes(range=[0, 0.6], row=2, col=3)
+    fig.update_yaxes(range=[0, 0.6], row=3, col=3)
+ 
     fig.show()
-
 
 def plot_one_approach(df_results_ls, approach_name):
     df_ls_long = pd.melt(df_results_ls, id_vars=['dataset'], var_name='metric', value_name='value')
@@ -186,7 +185,7 @@ def plot_one_approach(df_results_ls, approach_name):
 
     # Extract metric base (ndcg, recall, mrr) and type (@5, @10)
     df_ls_long["metric_base"] = df_ls_long["metric"].str.replace(r'_5|_10', '', regex=True)
-    df_ls_long["metric_type"] = df_ls_long["metric"].str.extract(r'(5|10)')
+    df_ls_long["metric_type"] = df_ls_long["metric"].str.extract(r'(5|10)').astype(int)
 
     # Define colors for each metric
     metric_colors = {'ndcg': '#fc6a03', 'recall': '#55bebd', 'mrr': '#e377c2'}
@@ -199,7 +198,7 @@ def plot_one_approach(df_results_ls, approach_name):
     fig = sp.make_subplots(
         rows=1, cols=num_datasets,
         subplot_titles=[f"{dataset}" for dataset in datasets],
-        shared_yaxes=True
+        shared_yaxes=True  # Ensures consistent Y-axis scale
     )
 
     # Mapping dataset positions to subplot columns
@@ -216,27 +215,137 @@ def plot_one_approach(df_results_ls, approach_name):
         color = metric_colors[metric]
 
         # Opacity for overlapping effect
-        opacity = 0.6 if metric_type == '5' else 0.4  
+        opacity = 0.6 if metric_type == 5 else 0.4  
+
+        # Show text only for @10
+        text_value = [value] if metric_type == 10 else None
+        text_position = 'outside' if metric_type == 10 else None
 
         fig.add_trace(
             go.Bar(
-                x=[metric],  # Group bars by metric
-                y=[value], 
+                x=[metric],           
+                y=[value],            
                 marker=dict(color=color),
                 opacity=opacity,
-                textposition='outside'  # Position text outside the bar
+                text=text_value,        # 📌 Show values only for @10
+                textposition=text_position
             ),
             row=1, col=col_idx
         )
 
     # Update layout
     fig.update_layout(
-        title="Metrics across Datasets for the best approach: Long Summary",
+        title=f"Metrics across Datasets for the Best Approach: {approach_name}",
         height=400, width=1300,
         showlegend=False,  # No legend
         barmode="overlay"
     )
 
+    # 📊 Ensure Y-axis ranges from 0 to 1 and show ticks in all subplots
+    for col in range(1, num_datasets + 1):
+        fig.update_yaxes(range=[0, 1], showticklabels=True, row=1, col=col)
+        fig.update_xaxes(title_text="Metrics", row=1, col=col)
+
     fig.show()
 
 
+def plot_table_results_all(df_results_ns, df_results_ss, df_results_ls, df_results_qr, df_results_q2d):
+    df_ns_long = pd.melt(df_results_ns, id_vars=['dataset'], var_name='metric', value_name='value')
+    df_ss_long = pd.melt(df_results_ss, id_vars=['dataset'], var_name='metric', value_name='value')
+    df_ls_long = pd.melt(df_results_ls, id_vars=['dataset'], var_name='metric', value_name='value')
+    df_qr_long = pd.melt(df_results_qr, id_vars=['dataset'], var_name='metric', value_name='value')
+    df_q2d_long = pd.melt(df_results_q2d, id_vars=['dataset'], var_name='metric', value_name='value')
+    df_ns_long['approach'] = 'NS'
+    df_ss_long['approach'] = 'SS'
+    df_ls_long['approach'] = 'LS'
+    df_qr_long['approach'] = 'QR'
+    df_q2d_long['approach'] = 'Q2D'
+    df_long = pd.concat([df_ns_long, df_ss_long, df_ls_long, df_qr_long, df_q2d_long])
+
+    # Extract metric base (ndcg, recall, mrr) and type (@5, @10)
+    df_long["metric_base"] = df_long["metric"].str.replace(r'_5|_10', '', regex=True)
+    df_long["metric_type"] = df_long["metric"].str.extract(r'(5|10)').astype(int)
+
+    approach_colors = {
+        'NS': '#fc6a03',  # Red for NS
+        'SS': '#55bebd ',  # Green for SS
+        'LS': '#e377c2',   # Blue for LS, 
+        'QR': '#2ca02c',  # Green for QR
+        'Q2D': '#9467bd'  # Purple for Q2D
+    }
+
+    # Define datasets and metrics
+    datasets = df_results_ls['dataset'].unique()
+    metrics = ['ndcg', 'recall', 'mrr']
+
+    # Create subplots: 3 rows (metrics) × 4 columns (datasets)
+    fig = sp.make_subplots(
+        rows=3, cols=4,
+        subplot_titles=[f"{dataset}" for metric in metrics for dataset in datasets],
+        shared_yaxes=False
+    )
+    metric_positions = {'ndcg': 1, 'recall': 2, 'mrr': 3}
+    dataset_positions = {dataset: i+1 for i, dataset in enumerate(datasets)}
+
+    for _, row in df_long.iterrows():
+        dataset = row['dataset']
+        metric = row['metric_base']
+        metric_type = row['metric_type']
+        approach = row['approach']
+        value = row['value']
+        
+        row_idx = metric_positions[metric]  # Metrics define the row
+        col_idx = dataset_positions[dataset]  # Datasets define the column
+
+        if metric_type == 10:
+            fig.add_trace(
+                go.Bar(
+                x=[approach],  
+                y=[value], 
+                name=f"{metric.upper()} @{metric_type}",
+                marker=dict(color=approach_colors[approach]),  # Color by approach
+                opacity=0.6,
+                textposition='outside',
+                text=[value]  # Add the value as text on the bar
+                ),
+                row=row_idx, col=col_idx
+            )
+        else:
+            fig.add_trace(
+                go.Bar(
+                    x=[approach],  
+                    y=[value], 
+                    name=f"{metric.upper()} @{metric_type}",
+                    marker=dict(color=approach_colors[approach]),  # Color by approach
+                    opacity=0.6,
+                    textposition='outside'  # Position text outside the bar
+                ),
+                row=row_idx, col=col_idx
+            )
+
+    # Update layout
+    fig.update_layout(
+        title="Comparison of Approaches per Dataset and Metric",
+        height=1400, width=1400,
+        bargap=0.1,  # Increase gap between bars to make them narrower
+        barmode="overlay",
+        xaxis_title="Approaches",
+        yaxis_title="Metric Score",
+        showlegend=False
+    )
+    # Update axis titles per row (corrected for metric names)
+    for metric, row in metric_positions.items():
+        fig.update_yaxes(title_text=f"{metric.upper()} Score", range=[0, 1], row=row, col=1)
+        for col in range(1, len(datasets) + 1): 
+            fig.update_xaxes(title_text="Approaches", row=row, col=col)
+
+    for col in range(1, len(datasets) + 1): 
+        fig.update_yaxes(range=[0, 0.9], row=1, col=col)
+        fig.update_yaxes(range=[0, 1], row=2, col=col)
+        fig.update_yaxes(range=[0, 0.8], row=3, col=col)
+
+    fig.update_yaxes(range=[0, 0.6], row=1, col=3)
+    fig.update_yaxes(range=[0, 0.6], row=2, col=3)
+    fig.update_yaxes(range=[0, 0.6], row=3, col=3)
+ 
+    fig.show()
