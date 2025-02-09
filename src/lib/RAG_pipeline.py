@@ -1,9 +1,9 @@
 import pandas as pd
 import numpy as np
 from sklearn.metrics import ndcg_score
-from data_handler import DataHandler
-from dataset import *
-from vector_store import FaissVectorStore
+from lib.data_handler import DataHandler
+from lib.dataset import *
+from lib.vector_store import FaissVectorStore
 
 class RAGPipeline:
     def __init__(self, 
@@ -118,7 +118,7 @@ class RAGPipeline:
                 mrr = mrr_by_hand(_unique(results[idx]['texts'])[:k], true_docs)
                 return ndcg, recall, mrr
         
-        for idx, _ in results.items():
+        for idx, _ in results.items(): # Loop over the queries
             true_docs = self.qrels[self.qrels['query_id'] == idx]['corpus_id'].values # Get the true documents labels for the query
             ndcg_k1, recall_k1, mrr_k1 = metris_at_k(k1, true_docs, idx)
             metrics[f'@{k1}']['ndcg'].append(ndcg_k1)

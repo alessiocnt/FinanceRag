@@ -9,7 +9,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from nltk.stem import PorterStemmer
 from nltk.corpus import stopwords
 
-from embeddings import *
+from lib.embeddings import *
 
 # # Download required NLTK resources
 # nltk.download('stopwords')
